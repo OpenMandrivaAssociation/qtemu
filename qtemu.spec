@@ -1,5 +1,5 @@
 %define name	qtemu
-%define version	1.0.3
+%define version	1.0.4
 %define release	%mkrel 1
 %define qtemudir %{_datadir}/qtemu
 
@@ -28,9 +28,9 @@ way you can easily test a new operating system or try a Live CD on
 your system without any troubles and dangers.
 
 %prep
-%setup -q -n qtemu
-%patch1 -p1 -b .fix-compile-qt4.1
-%patch2 -p1 -b .qemu-accelerators
+%setup -q
+#%patch1 -p1 -b .fix-compile-qt4.1
+#%patch2 -p1 -b .qemu-accelerators
 cp %{SOURCE2} images/
 
 # fix qtemu data location
