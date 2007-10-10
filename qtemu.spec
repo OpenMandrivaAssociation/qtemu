@@ -91,7 +91,7 @@ cat > $RPM_BUILD_ROOT%{_datadir}/applications/mandriva-%{name}.desktop << EOF
 Name=QtEmu
 Comment=A graphical user interface for QEMU
 Exec=%{_bindir}/qtemu
-Icon=%{name}.png
+Icon=%{name}
 Type=Application
 Terminal=false
 Categories=X-MandrivaLinux-MoreApplications-Emulators;Emulator;
