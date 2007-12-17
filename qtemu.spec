@@ -19,7 +19,6 @@ Group:		Emulators
 Url:		http://www.qtemu.org/
 Requires:	qemu >= 0.9.0-%{mkrel 3}
 BuildRequires:	cmake, qt4-devel >= 4.1, qt4-linguist
-BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-buildroot
 
 %description
 QtEmu is a graphical user interface for QEMU written in Qt4. It has
