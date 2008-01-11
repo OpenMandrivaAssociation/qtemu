@@ -73,17 +73,6 @@ mkdir -p $RPM_BUILD_ROOT%{_liconsdir}
 install -m644 %{SOURCE12} $RPM_BUILD_ROOT%{_liconsdir}/%{name}.png
 
 # install menu entries
-mkdir -p $RPM_BUILD_ROOT%{_menudir}
-cat > $RPM_BUILD_ROOT%{_menudir}/%{name} << EOF
-?package(%{name}): \
- needs="x11" \
- section="More Applications/Emulators" \
- title="QtEmu" \
- longtitle="A graphical user interface for QEMU" \
- command="qtemu" \
- icon="%{name}.png"\
- xdg="true"
-EOF
 
 mkdir -p $RPM_BUILD_ROOT%{_datadir}/applications
 cat > $RPM_BUILD_ROOT%{_datadir}/applications/mandriva-%{name}.desktop << EOF
@@ -112,7 +101,6 @@ rm -rf $RPM_BUILD_ROOT
 %dir %{qtemudir}
 %{qtemudir}/*
 # desktop integration
-%{_menudir}/%{name}
 %{_iconsdir}/*.png
 %{_miconsdir}/*.png
 %{_liconsdir}/*.png
