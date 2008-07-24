@@ -1,6 +1,6 @@
 %define name	qtemu
 %define version	1.0.4
-%define release	%mkrel 2
+%define release	%mkrel 4
 %define qtemudir %{_datadir}/qtemu
 
 Summary:	A graphical user interface for QEMU
