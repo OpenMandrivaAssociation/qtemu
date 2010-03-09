@@ -28,7 +28,7 @@ your system without any troubles and dangers.
 
 %prep
 %setup -q
-#%patch2 -p0 -b .qemu-accelerators
+%patch2 -p0 -b .qemu-accelerators
 cp %{SOURCE2} images/
 
 # fix qtemu data location
