@@ -11,8 +11,7 @@ Source0:	%{name}-%{version}.tar.bz2
 Source10:	qtemu.png
 Source11:	qtemu.16.png
 Source12:	qtemu.48.png
-#Patch1:		qtemu-fix-compile-qt4.1.patch
-#Patch2:		qtemu-qemu-accelerators.patch
+Patch2:		qtemu-qemu-accelerators.patch
 Source2:	processor.png
 License:	GPLv2
 Group:		Emulators
@@ -29,7 +28,6 @@ your system without any troubles and dangers.
 
 %prep
 %setup -q
-#%patch1 -p1 -b .fix-compile-qt4.1
 #%patch2 -p0 -b .qemu-accelerators
 cp %{SOURCE2} images/
 
