@@ -1,6 +1,6 @@
 %define name	qtemu
-%define version	1.0.4
-%define release	%mkrel 7
+%define version	1.0.5
+%define release	%mkrel 1
 %define qtemudir %{_datadir}/qtemu
 
 Summary:	A graphical user interface for QEMU
@@ -11,10 +11,10 @@ Source0:	%{name}-%{version}.tar.bz2
 Source10:	qtemu.png
 Source11:	qtemu.16.png
 Source12:	qtemu.48.png
-Patch1:		qtemu-fix-compile-qt4.1.patch
-Patch2:		qtemu-qemu-accelerators.patch
+#Patch1:		qtemu-fix-compile-qt4.1.patch
+#Patch2:		qtemu-qemu-accelerators.patch
 Source2:	processor.png
-License:	GPL
+License:	GPLv2
 Group:		Emulators
 Url:		http://www.qtemu.org/
 Requires:	qemu >= 0.9.0-%{mkrel 3}
@@ -30,7 +30,7 @@ your system without any troubles and dangers.
 %prep
 %setup -q
 #%patch1 -p1 -b .fix-compile-qt4.1
-%patch2 -p0 -b .qemu-accelerators
+#%patch2 -p0 -b .qemu-accelerators
 cp %{SOURCE2} images/
 
 # fix qtemu data location
