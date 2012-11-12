@@ -1,0 +1,366 @@
+Index: machineprocess.cpp
+===================================================================
+--- machineprocess.cpp
++++ machineprocess.cpp	2010-03-09 18:34:21.000000000 +0100
+@@ -40,7 +40,11 @@
+                 timeEnabled(false),
+                 additionalOptionsEnabled(false),
+                 memoryInt(-1),
+-                cpuInt(-1)
++                cpuInt(-1),
++                kqemuEnabled(false),
++                kqemuKernelEnabled(false),
++                kvmEnabled(false)
++
+ {
+ }
+ 
+@@ -91,6 +95,16 @@
+     if (cpuInt > 1)
+       arguments << "-smp" << QString::number(cpuInt);
+ 
++    if (kqemuEnabled) {
++        if (kqemuKernelEnabled)
++            arguments << "-kernel-kqemu";
++    }
++    else
++        arguments << "-no-kqemu";
++
++    if (!kvmEnabled)
++        arguments << "-no-kvm";
++
+     if (mouseEnabled)
+         arguments << "-usb" << "-usbdevice" << "tablet";
+ 
+@@ -231,6 +245,30 @@
+     cpuInt = value;
+ }
+ 
++void MachineProcess::kqemu(int value)
++{
++    if (value == Qt::Checked)
++        kqemuEnabled = true;
++    else
++        kqemuEnabled = false;
++}
++
++void MachineProcess::kqemuKernel(int value)
++{
++    if (value == Qt::Checked)
++        kqemuKernelEnabled = true;
++    else
++        kqemuKernelEnabled = false;
++}
++
++void MachineProcess::kvm(int value)
++{
++    if (value == Qt::Checked)
++        kvmEnabled = true;
++    else
++        kvmEnabled = false;
++}
++
+ void MachineProcess::networkCustomOptions(const QString& options)
+ {
+     networkCustomOptionsString = options;
+Index: machineprocess.h
+===================================================================
+--- machineprocess.h
++++ machineprocess.h	2010-03-09 18:35:59.000000000 +0100
+@@ -47,6 +47,9 @@
+     void mouse(int value);
+     void time(int value);
+     void cpu(int value);
++    void kqemu(int value);
++    void kqemuKernel(int value);
++    void kvm(int value);
+     void useAdditionalOptions(int value);
+     void networkCustomOptions(const QString& options);
+     void additionalOptions(const QString& options);
+@@ -65,6 +68,9 @@
+     bool mouseEnabled;
+     bool timeEnabled;
+     bool additionalOptionsEnabled;
++    bool kqemuEnabled;
++    bool kqemuKernelEnabled;
++    bool kvmEnabled;
+     int memoryInt;
+     int cpuInt;
+ 
+Index: machinetab.cpp
+===================================================================
+--- machinetab.cpp
++++ machinetab.cpp	2010-03-09 18:46:22.000000000 +0100
+@@ -41,6 +41,11 @@
+ #include <QLabel>
+ #include <QSettings>
+ 
++#include <stdint.h>
++
++static bool kqemu_possible(void);
++static bool kvm_possible(void);
++
+ MachineTab::MachineTab(QTabWidget *parent, const QString &fileName, const QString &myMachinesPathParent)
+     : QWidget(parent)
+ {
+@@ -318,6 +323,63 @@
+     connect(networkCheckBox, SIGNAL(toggled(bool)), networkCustomOptionsEdit, SLOT(setEnabled(bool)));
+     //network section end
+ 
++    //cpu section start
++    cpuButton = new QPushButton(QIcon(":/images/processor.png"), tr("&Virtualizer / Processors"), this);
++    cpuButton->setCheckable(true);
++    devicesLayout->addWidget(cpuButton);
++
++    cpuFrame = new QFrame(this);
++    cpuFrame->setVisible(false);
++    devicesLayout->addWidget(cpuFrame);
++    connect(cpuButton, SIGNAL(clicked(bool)), this, SLOT(closeAllSections()));
++    connect(cpuButton, SIGNAL(clicked(bool)), cpuFrame, SLOT(setVisible(bool)));
++    connect(cpuButton, SIGNAL(clicked(bool)), cpuButton, SLOT(setChecked(bool)));
++
++    QVBoxLayout *cpuFrameLayout = new QVBoxLayout;
++    cpuFrame->setLayout(cpuFrameLayout);
++
++    QLabel *qemuAcceleratorDescriptionLabel = new QLabel(tr("Choose what QEMU accelerator should be enabled for this "
++                                                            "virtual machine. Hardware-assisted virtualization has "
++                                                            "priority if it is available and is selected."), this);
++    qemuAcceleratorDescriptionLabel->setWordWrap(true);
++    cpuFrameLayout->addWidget(qemuAcceleratorDescriptionLabel);
++
++    kqemuCheckBox = new QCheckBox(tr("Enable QEMU &Accelerator (KQEMU)"), this);
++    connect(kqemuCheckBox, SIGNAL(stateChanged(int)), machineProcess, SLOT(kqemu(int)));
++    cpuFrameLayout->addWidget(kqemuCheckBox);
++    if (!kqemu_possible())
++
++        kqemuCheckBox->setDisabled(true);
++
++    kqemuKernelCheckBox = new QCheckBox(tr("Enable KQEMU &full virtualization"), this);
++    connect(kqemuKernelCheckBox, SIGNAL(stateChanged(int)), machineProcess, SLOT(kqemuKernel(int)));
++    cpuFrameLayout->addWidget(kqemuKernelCheckBox);
++    kqemuKernelCheckBox->setDisabled(true);
++
++    kvmCheckBox = new QCheckBox(tr("Enable &KVM (Kernel-based Virtual Machine)"), this);
++    connect(kvmCheckBox, SIGNAL(stateChanged(int)), machineProcess, SLOT(kvm(int)));
++    cpuFrameLayout->addWidget(kvmCheckBox);
++    if (!kvm_possible())
++        kvmCheckBox->setDisabled(true);
++
++    QLabel *cpuDescriptionLabel = new QLabel(tr("<hr>Choose the number of virtual CPUs."), this);
++    cpuDescriptionLabel->setWordWrap(true);
++    cpuFrameLayout->addWidget(cpuDescriptionLabel);
++
++    cpuSpinBox = new QSpinBox(this);
++    cpuSpinBox->setRange(1, 4);
++    cpuSpinBox->setValue(2);
++    connect(cpuSpinBox, SIGNAL(valueChanged(int)), machineProcess, SLOT(cpu(int)));
++
++    QLabel *cpuLabel = new QLabel(tr("Virtual CPU(s)"), this);
++
++    QHBoxLayout *cpuLayout = new QHBoxLayout;
++    cpuLayout->addWidget(cpuSpinBox);
++    cpuLayout->addWidget(cpuLabel);
++    cpuLayout->addStretch();
++    cpuFrameLayout->addLayout(cpuLayout);
++    //cpu section end
++
+     //sound section start
+     soundButton = new QPushButton(QIcon(":/images/" + iconTheme + "/sound.png"), tr("&Sound"), this);
+     soundButton->setCheckable(true);
+@@ -341,7 +403,7 @@
+     soundCheckBox = new QCheckBox(tr("&Enable sound"), this);
+     connect(soundCheckBox, SIGNAL(stateChanged(int)), machineProcess, SLOT(sound(int)));
+     soundFrameLayout->addWidget(soundCheckBox);
+-    //network section end
++    //sound section end
+ 
+ 
+     //other section start
+@@ -371,24 +433,6 @@
+     connect(mouseCheckBox, SIGNAL(stateChanged(int)), machineProcess, SLOT(mouse(int)));
+     otherFrameLayout->addWidget(mouseCheckBox);
+ 
+-    QLabel *cpuDescriptionLabel = new QLabel(tr("<hr>Choose the number of &virtual CPUs."), this);
+-    cpuDescriptionLabel->setWordWrap(true);
+-    otherFrameLayout->addWidget(cpuDescriptionLabel);
+-
+-    cpuSpinBox = new QSpinBox(this);
+-    cpuSpinBox->setRange(1, 4);
+-    cpuSpinBox->setValue(2);
+-    cpuDescriptionLabel->setBuddy(cpuSpinBox);
+-    connect(cpuSpinBox, SIGNAL(valueChanged(int)), machineProcess, SLOT(cpu(int)));
+-
+-    QLabel *cpuLabel = new QLabel(tr("Virtual CPU(s)"), this);
+-
+-    QHBoxLayout *cpuLayout = new QHBoxLayout;
+-    cpuLayout->addWidget(cpuSpinBox);
+-    cpuLayout->addWidget(cpuLabel);
+-    cpuLayout->addStretch();
+-    otherFrameLayout->addLayout(cpuLayout);
+-
+     QLabel *timeDescriptionLabel = new QLabel(tr("<hr>Choose if the virtual machine should use "
+                                                  "the host machine clock."), this);
+     timeDescriptionLabel->setWordWrap(true);
+@@ -440,6 +484,9 @@
+     connect(networkCheckBox, SIGNAL(stateChanged(int)), this, SLOT(write()));
+     connect(networkCustomOptionsEdit, SIGNAL(textChanged(const QString&)), this, SLOT(write()));
+     connect(soundCheckBox, SIGNAL(stateChanged(int)), this, SLOT(write()));
++    connect(kqemuCheckBox, SIGNAL(stateChanged(int)), this, SLOT(write()));
++    connect(kqemuKernelCheckBox, SIGNAL(stateChanged(int)), this, SLOT(write()));
++    connect(kvmCheckBox, SIGNAL(stateChanged(int)), this, SLOT(write()));
+     connect(mouseCheckBox, SIGNAL(stateChanged(int)), this, SLOT(write()));
+     connect(timeCheckBox, SIGNAL(stateChanged(int)), this, SLOT(write()));
+     connect(cpuSpinBox, SIGNAL(valueChanged(int)), this, SLOT(write()));
+@@ -514,6 +561,8 @@
+     floppyFrame->setVisible(false);
+     networkButton->setChecked(false);
+     networkFrame->setVisible(false);
++    cpuButton->setChecked(false);
++    cpuFrame->setVisible(false);
+     soundButton->setChecked(false);
+     soundFrame->setVisible(false);
+     otherButton->setChecked(false);
+@@ -572,6 +621,9 @@
+     floppyLineEdit->setText(QString());
+     floppyBootCheckBox->setChecked(false);
+     networkCheckBox->setChecked(true);
++    kqemuCheckBox->setChecked(kqemu_possible());
++    kqemuKernelCheckBox->setChecked(false);
++    kvmCheckBox->setChecked(false);
+     soundCheckBox->setChecked(true);
+     networkCustomOptionsEdit->setText(QString());
+     additionalOptionsCheckBox->setChecked(true);
+@@ -590,6 +642,14 @@
+     floppyLineEdit->setText(child.firstChildElement("floppy").text());
+     floppyBootCheckBox->setChecked(child.firstChildElement("bootFromFloppy").text() == "true");
+     networkCheckBox->setChecked(child.firstChildElement("network").text() == "true");
++    kqemuCheckBox->setChecked(kqemu_possible() && child.firstChildElement("kqemu").text() != "false");
++    if (kqemuCheckBox->isChecked()) {
++        kqemuKernelCheckBox->setEnabled(true);
++        kqemuKernelCheckBox->setChecked(child.firstChildElement("kqemuKernel").text() == "true");
++    }
++    else
++        kqemuKernelCheckBox->setDisabled(true);
++    kvmCheckBox->setChecked(kvm_possible() && child.firstChildElement("kvm").text() == "true");
+     soundCheckBox->setChecked(child.firstChildElement("sound").text() == "true");
+     networkCustomOptionsEdit->setText(child.firstChildElement("networkCustomOptions").text());
+     mouseCheckBox->setChecked(child.firstChildElement("mouse").text() == "true");
+@@ -634,6 +694,15 @@
+     changeValue("floppy", floppyLineEdit->text());
+     changeValue("bootFromFloppy", floppyBootCheckBox->isChecked() ? "true" : "false");
+     changeValue("network", networkCheckBox->isChecked() ? "true" : "false");
++    changeValue("kqemu", kqemuCheckBox->isChecked() ? "true" : "false");
++    if (kqemuCheckBox->isChecked())
++        kqemuKernelCheckBox->setEnabled(true);
++    else {
++        kqemuKernelCheckBox->setDisabled(true);
++        kqemuKernelCheckBox->setChecked(false);
++    }
++    changeValue("kqemuKernel", kqemuKernelCheckBox->isChecked() ? "true" : "false");
++    changeValue("kvm", kvmCheckBox->isChecked() ? "true" : "false");
+     changeValue("sound", soundCheckBox->isChecked() ? "true" : "false");
+     changeValue("networkCustomOptions", networkCustomOptionsEdit->text());
+     changeValue("mouse", mouseCheckBox->isChecked() ? "true" : "false");
+@@ -703,3 +772,67 @@
+     stopButton->setEnabled(false);
+     startButton->setEnabled(true);
+ }
++
++bool kqemu_possible(void)
++{
++#if defined __i386__ || defined __x86_64__
++    return true;
++#endif
++    return false;
++}
++
++#if defined __i386__ || defined __x86_64__
++static void cpuid(uint32_t op, uint32_t *eax, uint32_t *ebx, uint32_t *ecx, uint32_t *edx)
++{
++    uint32_t a = eax ? *eax : 0;
++    uint32_t b = ebx ? *ebx : 0;
++    uint32_t c = ecx ? *ecx : 0;
++    uint32_t d = edx ? *edx : 0;
++
++#if defined __i386__
++    __asm__ __volatile__ ("xchgl  %%ebx,%0\n\t"
++                          "cpuid  \n\t"
++                          "xchgl  %%ebx,%0\n\t"
++                          : "+r" (b), "=a" (a), "=c" (c), "=d" (d)
++                          : "1" (op), "2" (c));
++#else
++    __asm__ __volatile__ ("cpuid"
++                          : "=a" (a), "=b" (b), "=c" (c), "=d" (d)
++                          : "0" (op), "2" (c));
++#endif
++
++    if (eax) *eax = a;
++    if (ebx) *ebx = b;
++    if (ecx) *ecx = c;
++    if (edx) *edx = d;
++}
++
++static bool kvm_detect(void)
++{
++    uint32_t eax, ecx;
++    cpuid(1, NULL, NULL, &ecx, NULL);
++    if (ecx & (1 << 5)) // VMX
++        return true;
++
++    cpuid(0x80000000, &eax, NULL, NULL, NULL);
++    if ((eax & 0xffff0000) == 0x80000000 && eax >= 0x80000001) {
++        cpuid(0x80000001, NULL, NULL, &ecx, NULL);
++        if (ecx & (1 << 2)) // SVM
++            return true;
++    }
++
++    return false;
++}
++#endif
++
++bool kvm_possible(void)
++{
++#if defined __i386__ || defined __x86_64__
++    static int is_kvm_possible = -1;
++    if (is_kvm_possible < 0)
++        is_kvm_possible = kvm_detect();
++    return is_kvm_possible;
++#endif
++    return false;
++}
++
+Index: machinetab.h
+===================================================================
+--- machinetab.h
++++ machinetab.h	2010-03-09 18:47:41.000000000 +0100
+@@ -58,6 +58,9 @@
+     QCheckBox *floppyBootCheckBox;
+     QCheckBox *mouseCheckBox;
+     QCheckBox *timeCheckBox;
++    QCheckBox *kqemuCheckBox;
++    QCheckBox *kqemuKernelCheckBox;
++    QCheckBox *kvmCheckBox;
+     QCheckBox *additionalOptionsCheckBox;
+     QSpinBox *cpuSpinBox;
+     QLineEdit *machineNameEdit;
+@@ -80,6 +83,8 @@
+     QFrame *floppyFrame;
+     QPushButton *networkButton;
+     QFrame *networkFrame;
++    QPushButton *cpuButton;
++    QFrame *cpuFrame;
+     QPushButton *soundButton;
+     QFrame *soundFrame;
+     QPushButton *otherButton;
+Index: qtemu.qrc
+===================================================================
+--- qtemu.qrc
++++ qtemu.qrc	2010-03-09 18:48:01.000000000 +0100
+@@ -14,6 +14,7 @@
+     <file>images/crystal/floppy.png</file>
+     <file>images/crystal/cdimage.png</file>
+     <file>images/crystal/network.png</file>
++    <file>images/processor.png</file>
+     <file>images/crystal/sound.png</file>
+     <file>images/crystal/other.png</file>
+ 
