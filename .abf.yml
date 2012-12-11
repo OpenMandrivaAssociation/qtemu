@@ -1,6 +1,2 @@
 sources:
-  "processor.png:"	cbde9509f3c5359496a3d48ac602d6af7472ce62
-  "qtemu-1.0.5.tar.bz2:"	5800806ae0c767f11b3801af923905017833a2e4
-  "qtemu.16.png:"	f2e982aa6ba74ab8fe09f24bca41e1cb7ff67b3c
-  "qtemu.48.png:"	7631b96f22b375109e90eab6f712a8b69bb2575c
-  "qtemu.png:"	efa78e0e37643f769dda6992429ea233c950c6f5
+  "qtemu-1.0.5.tar.bz2": 5800806ae0c767f11b3801af923905017833a2e4
