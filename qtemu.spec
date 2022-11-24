@@ -42,7 +42,10 @@ install -m 0644 qtemu.desktop %{buildroot}%{_datadir}/applications/
 install -d %{buildroot}/%{_datadir}/pixmaps
 install -m 0644 qtemu.png %{buildroot}%{_datadir}/pixmaps/
 
-
+%files
+%{_bindir}/qtemu
+%{_datadir}/applications/qtemu.desktop
+%{_datadir}/pixmaps/qtemu.png
 
 
 %changelog
