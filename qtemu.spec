@@ -31,7 +31,7 @@ your system without any troubles and dangers.
 %autosetup -n gui-%{version}
 
 %build
-%qmake5
+%qmake_qt5 PREFIX=/usr
 %make_build
 
 %install
