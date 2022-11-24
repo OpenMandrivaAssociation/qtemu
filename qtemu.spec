@@ -35,12 +35,13 @@ your system without any troubles and dangers.
 %make_build
 
 %install
-install -d %{buildroot}/%{_bindir}
-install -m 0755 qtemu %{buildroot}%{_bindir}
-install -d %{buildroot}/%{_datadir}/applications
-install -m 0644 qtemu.desktop %{buildroot}%{_datadir}/applications/
-install -d %{buildroot}/%{_datadir}/pixmaps
-install -m 0644 qtemu.png %{buildroot}%{_datadir}/pixmaps/
+#install -d %{buildroot}/%{_bindir}
+#install -m 0755 qtemu %{buildroot}%{_bindir}
+#install -d %{buildroot}/%{_datadir}/applications
+#install -m 0644 qtemu.desktop %{buildroot}%{_datadir}/applications/
+#install -d %{buildroot}/%{_datadir}/pixmaps
+#install -m 0644 qtemu.png %{buildroot}%{_datadir}/pixmaps/
+%make_install
 
 %files
 %{_bindir}/qtemu
