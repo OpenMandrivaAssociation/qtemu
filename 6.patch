@@ -1,0 +1,75 @@
+From 1087eb3de7bb0df7dfca72827379e32996fce957 Mon Sep 17 00:00:00 2001
+From: Mateusz Krawczuk <mat.krawczuk@gmail.com>
+Date: Sun, 30 Oct 2022 19:20:01 +0100
+Subject: [PATCH] Fix problem caused by deprecated -soundhw
+
+After this change older versions of qemu with only soundhw parameter will no longer work
+
+Fixes issue #67
+
+Signed-off-by: Mateusz Krawczuk <mat.krawczuk@gmail.com>
+---
+ src/machine.cpp                 | 11 ++---------
+ src/newmachine/hardwarepage.cpp |  6 ++++--
+ src/utils/systemutils.cpp       |  3 ++-
+ 3 files changed, 8 insertions(+), 12 deletions(-)
+
+diff --git a/src/machine.cpp b/src/machine.cpp
+index 25743fa..6c092ff 100755
+--- a/src/machine.cpp
++++ b/src/machine.cpp
+@@ -946,17 +946,10 @@ QStringList Machine::generateMachineCommand()
+     bool firstAudio = true;
+     QStringListIterator audioIterator(this->audio);
+     while (audioIterator.hasNext()) {
+-        if(firstAudio) {
+-            firstAudio = false;
+-        } else {
+-            audioCards.append(", ");
+-        }
+-        audioCards.append(audioIterator.next());
++        qemuCommand << "-device";
++        qemuCommand << audioIterator.next();
+     }
+ 
+-    qemuCommand << "-soundhw";
+-    qemuCommand << audioCards;
+-
+     QString bootOrder;
+     QStringListIterator bootIterator(this->boot->bootOrder());
+     while (bootIterator.hasNext()) {
+diff --git a/src/newmachine/hardwarepage.cpp b/src/newmachine/hardwarepage.cpp
+index 54f23dd..015f24e 100644
+--- a/src/newmachine/hardwarepage.cpp
++++ b/src/newmachine/hardwarepage.cpp
+@@ -483,9 +483,11 @@ void AudioTab::selectCS4231ACard(bool selectCS4231A)
+ void AudioTab::selectIntelHDCard(bool selectIntelHD)
+ {
+     if (selectIntelHD) {
+-        this->m_newMachine->addAudio("hda");
++        this->m_newMachine->addAudio("intel-hda");
++        this->m_newMachine->addAudio("hda-duplex");
+     } else {
+-        this->m_newMachine->removeAudio("hda");
++        this->m_newMachine->addAudio("intel-hda");
++        this->m_newMachine->removeAudio("hda-duplex");
+     }
+ }
+ 
+diff --git a/src/utils/systemutils.cpp b/src/utils/systemutils.cpp
+index c91aae0..3bc2078 100644
+--- a/src/utils/systemutils.cpp
++++ b/src/utils/systemutils.cpp
+@@ -222,7 +222,8 @@ QHash<QString, QString> SystemUtils::getSoundCards()
+     soundCardsHash.insert("sb16", "Creative Sound Blaster 16");
+     soundCardsHash.insert("ac97", "Intel AC97(82801AA)");
+     soundCardsHash.insert("gus", "Gravis Ultrasound GF1");
+-    soundCardsHash.insert("hda", "Intel HD Audio");
++    soundCardsHash.insert("intel-hda", "Intel HD Audio");
++    soundCardsHash.insert("hda-duplex", "HDA Codec");
+     soundCardsHash.insert("es1370", "ENSONIQ AudioPCI ES1370");
+     soundCardsHash.insert("adlib", "Yamaha YM3812");
+     soundCardsHash.insert("cs4231a", "CS4231A");
+-- 
+GitLab
+
