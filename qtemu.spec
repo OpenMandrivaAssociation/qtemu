@@ -3,7 +3,7 @@
 Summary:	A graphical user interface for QEMU
 Name:		qtemu
 Version:	2.1
-Release:	2
+Release:	3
 Source0:	https://gitlab.com/qtemu/gui/-/archive/%{version}/gui-%{version}.tar.bz2
 Source10:	qtemu.png
 Source11:	qtemu.16.png
