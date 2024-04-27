@@ -24,6 +24,7 @@ BuildRequires:  cmake(Qt6Core)
 BuildRequires:  cmake(Qt6Gui)
 BuildRequires:  cmake(Qt6Network)
 BuildRequires:  cmake(Qt6Widgets)
+BuildRequires:	cmake(Qt6Svg)
 
 %description
 QtEmu is a graphical user interface for QEMU written in Qt4. It has
