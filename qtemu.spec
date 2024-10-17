@@ -17,7 +17,7 @@ Source12:	qtemu.48.png
 Source2:	processor.png
 License:	GPL-2.0
 Group:		Emulators
-Url:		http://www.qtemu.org/
+Url:		https://www.qtemu.org/
 Requires:	qemu
 BuildRequires:	cmake ninja
 BuildRequires:  cmake(Qt6Core)
