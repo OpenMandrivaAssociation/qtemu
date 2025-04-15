@@ -12,7 +12,7 @@ Release:	1
 # seems dead-ish, let's use a fork that is at least maintained enough
 # to be ported to Qt6
 
-#Arch ins using https://gitlab.com/qtemu/gui for the git version
+#Arch is using https://gitlab.com/qtemu/gui for the git version
 # Newest release of MateuszKrawczuk/QtEmu will not build with qt6.9
 Source0:	https://gitlab.com/qtemu/gui/-/archive/d6c2d66ae88f38f8ed529c56f5c2b446e9dc3eb1/gui-d6c2d66ae88f38f8ed529c56f5c2b446e9dc3eb1.tar.gz
 Source10:	qtemu.png
