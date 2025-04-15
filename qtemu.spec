@@ -30,6 +30,7 @@ BuildRequires:  cmake(Qt6Gui)
 BuildRequires:  cmake(Qt6Network)
 BuildRequires:  cmake(Qt6Widgets)
 BuildRequires:	cmake(Qt6Svg)
+BuildRequires:	qt6-qtbase-theme-gtk3
 
 %description
 QtEmu is a graphical user interface for QEMU written in Qt4. It has
